@@ -102,9 +102,6 @@ export function CursorChat({
           <p className="text-sm text-muted-foreground">
             Start typing to chat • <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Enter</kbd> to send • <kbd className="px-1 py-0.5 bg-muted rounded text-xs">Esc</kbd> to cancel
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            {isConnected ? '🟢 Connected' : '🔴 Disconnected'}
-          </p>
           {isTyping && (
             <p className="text-xs text-muted-foreground mt-1">
               {currentMessage.length}/{MAX_TYPING_LENGTH} characters
