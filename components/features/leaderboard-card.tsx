@@ -23,6 +23,16 @@ import { cn } from '@/lib/utils'
 import { useLeaderboard } from '@/hooks/use-leaderboard'
 import { UserPlus } from 'lucide-react'
 
+interface LeaderboardEntry {
+  id: string
+  handle: string
+  name?: string
+  avatar: string
+  points: number
+  rank: number
+  isCurrentUser?: boolean
+}
+
 interface LeaderboardCardProps {
   className?: string
 }
@@ -46,13 +56,15 @@ export function LeaderboardCard({ className }: LeaderboardCardProps) {
   const handleFollowClick = (handle: string, event: React.MouseEvent) => {
     event.stopPropagation()
     // Use Twitter follow intent URL as per X Developer documentation
-    const followUrl = `https://twitter.com/intent/follow?screen_name=${handle}`
+    const cleanHandle = handle.replace('@', '')
+    const followUrl = `https://twitter.com/intent/follow?screen_name=${cleanHandle}`
     window.open(followUrl, '_blank', 'width=550,height=420')
   }
 
   const handleUserClick = (handle: string) => {
     // Open Twitter profile in new tab
-    window.open(`https://twitter.com/${handle}`, '_blank')
+    const cleanHandle = handle.replace('@', '')
+    window.open(`https://twitter.com/${cleanHandle}`, '_blank')
   }
 
   return (
@@ -103,38 +115,46 @@ export function LeaderboardCard({ className }: LeaderboardCardProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                leaderboard.map((entry: any) => (
+                leaderboard.map((player: LeaderboardEntry) => (
                   <TableRow
-                    key={entry.id}
+                    key={player.id}
                     className={cn(
                       'h-16 transition-colors group',
-                      entry.isCurrentUser && 'bg-primary/10 hover:bg-primary/20'
+                      player.isCurrentUser && 'bg-primary/10 hover:bg-primary/20'
                     )}
                   >
                     <TableCell className="font-medium">
-                      {getRankDisplay(entry.rank)}
+                      <div className="flex items-center gap-2">
+                        {getRankDisplay(player.rank)}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div 
                         className="flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity"
-                        onClick={() => handleUserClick(entry.handle)}
+                        onClick={() => handleUserClick(player.handle)}
                       >
                         <div className="flex items-center gap-3">
                           <Avatar className="h-10 w-10">
                             <AvatarImage 
-                              src={entry.avatar} 
-                              alt={entry.name}
+                              src={player.avatar} 
+                              alt={player.name || player.handle}
                             />
                             <AvatarFallback>
-                              {entry.name?.slice(0, 2).toUpperCase() || entry.handle?.slice(0, 2).toUpperCase()}
+                              {player.name?.slice(0, 2).toUpperCase() || player.handle?.slice(0, 2).toUpperCase() || '??'}
                             </AvatarFallback>
                           </Avatar>
-                          <span className={cn(
-                            'font-medium',
-                            entry.isCurrentUser && 'text-primary'
-                          )}>
-                            @{entry.handle}
-                          </span>
+                          <a 
+                            href={`https://twitter.com/${player.handle?.replace('@', '') || ''}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={cn(
+                              'font-medium hover:text-primary transition-colors',
+                              player.isCurrentUser && 'text-primary'
+                            )}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            @{player.handle || 'unknown'}
+                          </a>
                         </div>
                         
                         {/* Follow Button - appears on hover */}
@@ -142,7 +162,7 @@ export function LeaderboardCard({ className }: LeaderboardCardProps) {
                           size="sm"
                           variant="outline"
                           className="opacity-0 group-hover:opacity-100 transition-opacity h-7 px-3 text-xs"
-                          onClick={(e) => handleFollowClick(entry.handle, e)}
+                          onClick={(e) => handleFollowClick(player.handle, e)}
                         >
                           <UserPlus className="h-3 w-3 mr-1" />
                           Follow
@@ -151,8 +171,10 @@ export function LeaderboardCard({ className }: LeaderboardCardProps) {
                     </TableCell>
                     <TableCell className="text-right font-mono">
                       <div className="flex items-center justify-end gap-1">
-                        <span>{entry.points.toLocaleString()}</span>
-                        <span className="text-xs text-muted-foreground">pts</span>
+                        <span className="font-bold text-accent">
+                          ✨ {player.points.toLocaleString()}
+                        </span>
+                        <span className="text-sm font-medium">pts</span>
                       </div>
                     </TableCell>
                   </TableRow>

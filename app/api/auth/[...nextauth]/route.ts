@@ -1,14 +1,8 @@
 import NextAuth from 'next-auth'
 import TwitterProvider from 'next-auth/providers/twitter'
 import { SupabaseAdapter } from '@auth/supabase-adapter'
-import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-export const authOptions = {
+const handler = NextAuth({
   providers: [
     TwitterProvider({
       clientId: process.env.TWITTER_CLIENT_ID!,
@@ -21,18 +15,20 @@ export const authOptions = {
     secret: process.env.SUPABASE_SERVICE_ROLE_KEY!,
   }),
   callbacks: {
-    async session({ session, token, user }: any) {
+    async session({ session, user }) {
       // Add custom fields to session
       if (session?.user) {
         session.user.id = user.id
-        session.user.handle = user.username || user.email?.split('@')[0]
+        session.user.username = user.username
       }
       return session
     },
-    async jwt({ token, user, account, profile }: any) {
+    async jwt({ token, user, profile }) {
       if (user) {
         token.id = user.id
-        token.handle = profile?.username || user.email?.split('@')[0]
+        if (profile && 'username' in profile) {
+          token.username = profile.username as string
+        }
       }
       return token
     }
@@ -43,10 +39,8 @@ export const authOptions = {
     error: '/auth/error',
   },
   session: {
-    strategy: 'jwt' as const,
+    strategy: 'jwt',
   },
-}
-
-const handler = NextAuth(authOptions)
+})
 
 export { handler as GET, handler as POST } 

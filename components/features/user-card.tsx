@@ -27,13 +27,41 @@ const questActions: Record<string, string> = {
 }
 
 // Mock tweet component
-function TweetCard({ post, user, onClaimBonus }: { post: any, user: any, onClaimBonus: (postId: string, bonusPoints: number) => void }) {
+interface UserPost {
+  id: string
+  content: string
+  awarded_at: string
+  bonus_type?: string
+  points: number
+}
+
+interface User {
+  id: string
+  name: string
+  handle: string
+  avatar: string
+  points: number
+}
+
+interface Quest {
+  id: string
+  type: string
+  title: string
+  points: number
+  completed: boolean
+}
+
+function TweetCard({ post, user, onClaimBonus }: { 
+  post: UserPost, 
+  user: User, 
+  onClaimBonus: (postId: string, bonusPoints: number) => void 
+}) {
   const [claimed, setClaimed] = useState(false)
   
   const handleClaim = () => {
     if (!claimed) {
       setClaimed(true)
-      const bonusPoints = getBonusPoints(post.bonus_type)
+      const bonusPoints = getBonusPoints(post.bonus_type || '')
       onClaimBonus(post.id, bonusPoints)
     }
   }
@@ -138,7 +166,7 @@ export function UserCard({ className }: UserCardProps) {
 
   const isLoading = authLoading || dataLoading
 
-  const handleQuestClick = async (quest: any) => {
+  const handleQuestClick = async (quest: Quest) => {
     if (quest.completed || !authUser) return
 
     // For DRIP actions, handle differently
@@ -177,7 +205,7 @@ export function UserCard({ className }: UserCardProps) {
           const error = await response.json()
           toast.error(error.error || 'Failed to complete quest')
         }
-      } catch (error) {
+      } catch {
         toast.error('Failed to complete quest')
       } finally {
         setCompletingQuest(null)
@@ -266,7 +294,7 @@ export function UserCard({ className }: UserCardProps) {
             <div className="space-y-3">
               <h4 className="font-semibold text-lg">Daily Quests</h4>
               <div className="space-y-2">
-                {quests.map((quest: any) => (
+                {quests.map((quest: Quest) => (
                   <div
                     key={quest.id}
                     className={cn(
@@ -310,7 +338,7 @@ export function UserCard({ className }: UserCardProps) {
               </TabsList>
               <TabsContent value="my-posts" className="space-y-3">
                 {posts.length > 0 ? (
-                  posts.map((post: any) => (
+                  posts.map((post: UserPost) => (
                     <TweetCard 
                       key={post.id} 
                       post={post} 

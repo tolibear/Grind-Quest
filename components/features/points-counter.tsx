@@ -12,25 +12,11 @@ export function PointsCounter({ value, className }: PointsCounterProps) {
   const [displayValue, setDisplayValue] = useState(0)
 
   useEffect(() => {
-    const duration = 1000 // 1 second animation
-    const steps = 30
-    const increment = (value - displayValue) / steps
-    let current = displayValue
-    let step = 0
+    const timer = setTimeout(() => {
+      setDisplayValue(value)
+    }, 100)
 
-    const timer = setInterval(() => {
-      step++
-      current += increment
-      
-      if (step >= steps) {
-        setDisplayValue(value)
-        clearInterval(timer)
-      } else {
-        setDisplayValue(Math.floor(current))
-      }
-    }, duration / steps)
-
-    return () => clearInterval(timer)
+    return () => clearTimeout(timer)
   }, [value])
 
   return (
