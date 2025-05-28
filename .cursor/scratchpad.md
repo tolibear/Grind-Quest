@@ -3,7 +3,7 @@
 ## Background and Motivation
 Building a one-page web app for Grind Quest - a gamified social engagement platform for the $GRIND token community. The app will feature a leaderboard system and quest-based rewards for Twitter/X interactions. The design should be clean, minimal, and follow the shadcn/ui aesthetic shown in the reference screenshot.
 
-**UPDATED**: Now integrating with DRIP for enhanced social questing and points management. Using mock authentication for local testing without Twitter OAuth setup. **Comprehensive mock data with realistic posts and full leaderboard.** **NEW: Header navigation with user info and dynamic points updates.**
+**UPDATED**: Now integrating with DRIP for enhanced social questing and points management. Using mock authentication for local testing without Twitter OAuth setup. **Comprehensive mock data with realistic posts and full leaderboard.** **NEW: Header navigation with user info and dynamic points updates.** **NEXT: Supabase Realtime with floating heads cursor tracking and live chat for enhanced social interaction.**
 
 ## Key Challenges and Analysis
 1. **Design System**: Implementing a clean, minimal interface that matches the shadcn/ui aesthetic from the screenshot ✅
@@ -16,6 +16,7 @@ Building a one-page web app for Grind Quest - a gamified social engagement platf
 8. **Component Issues**: Fixed Select component import errors and simplified UI ✅
 9. **Comprehensive Mock Data**: Created realistic posts and full leaderboard ecosystem ✅
 10. **Header Navigation**: Moved user info to header with dynamic points updates ✅
+11. **Supabase Realtime**: Implementing floating heads cursor tracking and live chat for social interaction 🚧
 
 ## High-level Task Breakdown
 
@@ -106,6 +107,19 @@ Building a one-page web app for Grind Quest - a gamified social engagement platf
 - [x] Ensure points update in real-time across components
 - **Success Criteria**: Header shows user info with live points updates, clean layout ✅
 
+### Phase 11: Supabase Realtime Social Features 🚧
+- [ ] Install required dependencies (framer-motion, lodash)
+- [ ] Create Supabase Realtime client configuration
+- [ ] Implement usePresence hook for cursor tracking
+- [ ] Build CursorTracker component for mouse movement detection
+- [ ] Create FloatingHeads component with animated avatars
+- [ ] Implement useChat hook for real-time messaging
+- [ ] Build Chat component with collapsible UI
+- [ ] Add rate limiting and performance optimizations
+- [ ] Integrate realtime features into main layout
+- [ ] Test multi-user interactions and cleanup
+- **Success Criteria**: Users see floating avatar heads following other users' cursors and can chat in real-time ⏳
+
 ## Design Decisions
 - **Color Palette**: Based on the screenshot, using a dark theme with:
   - Background: Dark gray/black (#0A0A0A)
@@ -145,6 +159,7 @@ Building a one-page web app for Grind Quest - a gamified social engagement platf
 - [x] Header navigation implementation
 - [x] Dynamic points updates
 - [x] Testing and optimization
+- [ ] Supabase Realtime social features
 
 ## Current Status / Progress Tracking
 
@@ -226,6 +241,13 @@ Main (max-w-6xl container)
 - **Verify**: Header remains functional, user name hides on small screens
 - **Check**: Two cards stack vertically on mobile
 
+### Scenario 5: Realtime Social Features (Planned)
+- **Setup**: Open app in multiple browser tabs/windows
+- **Test 1**: Move mouse in one tab, see floating head in other tab
+- **Test 2**: Send chat message, see it appear in other tabs
+- **Test 3**: Close one tab, see floating head disappear
+- **Verify**: Smooth animations, no performance issues
+
 ## Executor's Feedback or Assistance Requests
 
 ### ✅ RESOLVED: Header Navigation Implementation
@@ -249,10 +271,21 @@ The application now features a complete header navigation system:
 5. **Responsive Design**: Works well on mobile and desktop
 
 ## What's Next
-The header navigation implementation is complete! Key features:
-- **Header Layout**: Clean navigation with user info on right side
-- **Dynamic Points**: Real-time updates when earning rewards
-- **Better UX**: More space for content, persistent user controls
-- **Responsive**: Works on all screen sizes
+**Phase 11: Supabase Realtime Social Features** 🚀
 
-The app now has a professional layout with the user info properly positioned in the header, and points update dynamically across all components when users claim bonuses or complete quests! 
+Transform Grind Quest into a multiplayer social experience:
+- **Floating Heads**: See other users' cursors as animated avatars
+- **Live Chat**: Real-time community messaging
+- **Social Presence**: Feel connected to other $GRIND community members
+- **Performance**: Smooth 60fps animations with optimized updates
+
+This will be the most exciting feature yet - turning a simple leaderboard into a vibrant, interactive social platform!
+
+Ready to implement the exciting social features! The plan includes:
+1. Install dependencies (framer-motion, lodash)
+2. Create realtime client configuration
+3. Implement presence tracking system
+4. Build floating heads display
+5. Add live chat functionality
+
+The implementation will follow the comprehensive Cursor rule created for Supabase Realtime best practices, ensuring clean, performant, and maintainable code. 
