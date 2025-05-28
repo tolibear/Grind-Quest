@@ -209,36 +209,55 @@ export function FloatingCursors({ users, currentUserId, currentUserTyping, recen
         })}
 
         {/* Current user's typing/message below cursor */}
-        {(currentUserTyping || currentUserMessage) && (
-          <motion.div
-            className="absolute"
-            animate={{
-              x: mousePosition.x,
-              y: mousePosition.y + 30 // Position below cursor
-            }}
-            transition={{
-              type: "spring",
-              damping: 40,
-              stiffness: 400,
-              mass: 0.1 // Very light for instant response
-            }}
-          >
+        <AnimatePresence>
+          {(currentUserTyping || currentUserMessage) && (
             <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.8 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -10, scale: 0.8 }}
-              transition={{ duration: 0.3 }}
-              className="relative -translate-x-1/2"
+              key="current-user-message"
+              className="absolute"
+              initial={{
+                x: mousePosition.x,
+                y: mousePosition.y + 30,
+                opacity: 0,
+                scale: 0.8
+              }}
+              animate={{
+                x: mousePosition.x,
+                y: mousePosition.y + 30,
+                opacity: 1,
+                scale: 1
+              }}
+              exit={{
+                opacity: 0,
+                scale: 0.8
+              }}
+              transition={{
+                x: {
+                  type: "spring",
+                  damping: 40,
+                  stiffness: 400,
+                  mass: 0.1
+                },
+                y: {
+                  type: "spring",
+                  damping: 40,
+                  stiffness: 400,
+                  mass: 0.1
+                },
+                opacity: { duration: 0.2 },
+                scale: { duration: 0.2 }
+              }}
             >
-              <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-sm relative">
-                {currentUserTyping || currentUserMessage?.message}
-                {currentUserTyping && <span className="animate-pulse">|</span>}
-                {/* Speech bubble arrow pointing up */}
-                <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45"></div>
+              <div className="relative -translate-x-1/2">
+                <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg shadow-lg text-sm relative">
+                  {currentUserTyping || currentUserMessage?.message}
+                  {currentUserTyping && <span className="animate-pulse">|</span>}
+                  {/* Speech bubble arrow pointing up */}
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-primary rotate-45"></div>
+                </div>
               </div>
             </motion.div>
-          </motion.div>
-        )}
+          )}
+        </AnimatePresence>
       </AnimatePresence>
     </div>
   )
