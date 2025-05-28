@@ -26,7 +26,6 @@ export function RealtimeProvider({ user, children }: RealtimeProviderProps) {
     message: string
     timestamp: string
   }>>([])
-  const [lastCursorUpdate, setLastCursorUpdate] = useState<string>('')
   const [currentUserTyping, setCurrentUserTyping] = useState<string>('')
 
   // Test Supabase connection
@@ -59,7 +58,7 @@ export function RealtimeProvider({ user, children }: RealtimeProviderProps) {
     avatar: user.avatar
   } : null
 
-  const { onlineUsers, updateTyping, isConnected: presenceConnected, updateCursor } = usePresence(
+  const { onlineUsers, updateTyping } = usePresence(
     presenceUser || { user_id: '', username: '', avatar: '' },
     { roomId: 'main' }
   )
@@ -68,16 +67,6 @@ export function RealtimeProvider({ user, children }: RealtimeProviderProps) {
     user && supabaseStatus === 'connected' ? { id: user.id, username: user.handle, avatar: user.avatar } : { id: '', username: '', avatar: '' },
     { roomId: 'main' }
   )
-
-  // Track cursor updates for debugging
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setLastCursorUpdate(`${e.clientX}, ${e.clientY}`)
-    }
-    
-    window.addEventListener('mousemove', handleMouseMove)
-    return () => window.removeEventListener('mousemove', handleMouseMove)
-  }, [])
 
   // Track recent messages for transient display
   useEffect(() => {
@@ -116,10 +105,9 @@ export function RealtimeProvider({ user, children }: RealtimeProviderProps) {
       {/* <div className="fixed top-20 left-6 z-50 bg-black/80 text-white p-3 rounded-lg text-xs max-w-xs space-y-1">
         <div>User: {user.handle}</div>
         <div>Supabase: {supabaseStatus === 'testing' ? '🔄' : supabaseStatus === 'connected' ? '✅' : '❌'}</div>
-        <div>Presence: {presenceConnected ? '✅' : '❌'}</div>
+        <div>Presence: {isConnected ? '✅' : '❌'}</div>
         <div>Chat: {chatConnected ? '✅' : '❌'}</div>
         <div>Online: {Object.keys(onlineUsers).length}</div>
-        <div>Cursor: {lastCursorUpdate}</div>
         <div className="text-[10px] opacity-70">
           {Object.entries(onlineUsers).map(([id, u]) => (
             <div key={id}>
