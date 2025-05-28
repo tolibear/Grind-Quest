@@ -1,0 +1,293 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Grind Quest Specific Implementation Guidelines
+
+## Project Overview
+Grind Quest is a gamified social engagement platform for the $GRIND token community with Twitter/X integration.
+
+## Design System
+
+### Color Palette
+```css
+:root {
+  --background: #0A0A0A;
+  --foreground: #FAFAFA;
+  --card: #1A1A1A;
+  --card-foreground: #FAFAFA;
+  --primary: #35C98C;
+  --primary-foreground: #0A0A0A;
+  --secondary: #EC6EBF;
+  --secondary-foreground: #FAFAFA;
+  --muted: #262626;
+  --muted-foreground: #A3A3A3;
+  --accent: #F4B700;
+  --destructive: #EF4444;
+  --border: #262626;
+  --input: #262626;
+  --ring: #35C98C;
+}
+```
+
+### Typography
+```tsx
+// Use Inter font
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter',
+})
+
+// Apply to body
+<body className={`${inter.variable} font-sans`}>
+```
+
+## Component Structure
+
+### Main Layout
+```tsx
+// app/page.tsx
+<main className="flex flex-col md:flex-row mx-auto max-w-6xl min-h-screen items-center justify-center gap-6 p-6">
+  <LeaderboardCard className="w-full md:w-1/2 h-[80vh]" />
+  <UserCard className="w-full md:w-1/2 h-[80vh]" />
+</main>
+```
+
+### Leaderboard Card
+```tsx
+<Card className="flex flex-col h-full">
+  <CardHeader>
+    <CardTitle className="text-2xl font-bold">Leaderboard</CardTitle>
+    <CardDescription>Top 100 $GRIND earners</CardDescription>
+  </CardHeader>
+  <CardContent className="flex-1 overflow-hidden">
+    <ScrollArea className="h-full">
+      <Table>
+        {/* Table content */}
+      </Table>
+    </ScrollArea>
+  </CardContent>
+</Card>
+```
+
+### User Card States
+```tsx
+// Visitor state
+<Card className="flex flex-col h-full items-center justify-center">
+  <CardContent className="text-center space-y-4">
+    <h2 className="text-3xl font-bold">Join the Grind</h2>
+    <p className="text-muted-foreground">Connect your X account to start earning</p>
+    <Button size="lg" className="gap-2">
+      <TwitterIcon className="h-5 w-5" />
+      Connect X
+    </Button>
+  </CardContent>
+</Card>
+
+// Player state
+<Card className="flex flex-col h-full">
+  <CardHeader>
+    <div className="flex items-center justify-between">
+      <UserProfile />
+      <Button variant="outline" size="sm">Disconnect</Button>
+    </div>
+  </CardHeader>
+  <CardContent className="flex-1 space-y-6">
+    <PointsCounter />
+    <QuestList />
+    <PostsTabs />
+  </CardContent>
+</Card>
+```
+
+## Data Models
+
+### Database Schema
+```sql
+-- Users table
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  twitter_id TEXT UNIQUE NOT NULL,
+  handle TEXT NOT NULL,
+  name TEXT,
+  avatar TEXT,
+  points INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Quests table
+CREATE TABLE quests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL CHECK (type IN ('follow', 'post', 'reply', 'repost', 'quote')),
+  title TEXT NOT NULL,
+  description TEXT,
+  points INTEGER NOT NULL,
+  metadata JSONB DEFAULT '{}',
+  active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- User quest completions
+CREATE TABLE user_quests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  quest_id UUID REFERENCES quests(id) ON DELETE CASCADE,
+  completed_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, quest_id)
+);
+
+-- Posts tracking
+CREATE TABLE posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  tweet_id TEXT UNIQUE NOT NULL,
+  content TEXT,
+  points INTEGER NOT NULL,
+  bonus_type TEXT CHECK (bonus_type IN ('reply', 'repost', 'quote', 'viral')),
+  awarded_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+## API Endpoints
+
+### User Endpoints
+```tsx
+// GET /api/me
+// Returns current user data with quests and posts
+
+// GET /api/leaderboard
+// Returns paginated leaderboard data
+// Query params: ?page=1&limit=100
+
+// POST /api/quests/complete
+// Body: { questId: string }
+// Marks quest as complete after verification
+```
+
+## Quest System
+
+### Quest Types
+```tsx
+const questTypes = {
+  follow: {
+    title: "Follow @grindcoin",
+    points: 100,
+    action: "https://twitter.com/intent/follow?screen_name=grindcoin"
+  },
+  post: {
+    title: "Post about $GRIND",
+    points: 200,
+    action: "https://twitter.com/intent/tweet?text=$GRIND%20is%20🔥"
+  },
+  daily_engagement: {
+    title: "Daily Engagement",
+    points: 50,
+    recurring: true
+  }
+}
+```
+
+### Points System
+```tsx
+const pointsConfig = {
+  quests: {
+    follow: 100,
+    post: 200,
+    daily: 50
+  },
+  bonuses: {
+    reply: 25,
+    repost: 50,
+    quote: 120,
+    viral: 500 // 1000+ engagements
+  }
+}
+```
+
+## Real-time Updates
+
+### WebSocket Events
+```tsx
+// Listen for points updates
+socket.on('points:update', (data: { userId: string, points: number }) => {
+  // Update UI
+})
+
+// Listen for leaderboard changes
+socket.on('leaderboard:update', (data: LeaderboardEntry[]) => {
+  // Update leaderboard
+})
+```
+
+### Polling Fallback
+```tsx
+// Use SWR for polling if WebSocket unavailable
+const { data } = useSWR('/api/me', fetcher, {
+  refreshInterval: 30000 // 30 seconds
+})
+```
+
+## Animation Guidelines
+
+### Points Counter
+```tsx
+import { animated, useSpring } from 'react-spring'
+
+const AnimatedPoints = ({ points }: { points: number }) => {
+  const props = useSpring({
+    number: points,
+    from: { number: 0 },
+    config: { tension: 300, friction: 10 }
+  })
+  
+  return (
+    <animated.div className="text-4xl font-bold text-accent">
+      {props.number.to(n => n.toFixed(0))}
+    </animated.div>
+  )
+}
+```
+
+### Toast Notifications
+```tsx
+// Success toast for points earned
+toast({
+  title: "Points Earned! 🎉",
+  description: `+${points} points for ${action}`,
+  duration: 3000,
+})
+
+// Error toast
+toast({
+  title: "Error",
+  description: "Failed to complete quest",
+  variant: "destructive",
+})
+```
+
+## Security Considerations
+- Validate all Twitter interactions server-side
+- Rate limit quest completions (1 per minute)
+- Implement CSRF protection for mutations
+- Sanitize user-generated content
+- Use RLS for database security
+- Validate webhook signatures from Twitter
+
+## Performance Optimizations
+- Lazy load user posts tab content
+- Virtualize leaderboard for large lists
+- Cache leaderboard data (5 minute TTL)
+- Optimize images with next/image
+- Use static generation where possible
+- Implement proper error boundaries
+
+## Testing Strategy
+- Unit tests for point calculations
+- Integration tests for quest completion
+- E2E tests for auth flow
+- Load testing for leaderboard
+- Mock Twitter API in development

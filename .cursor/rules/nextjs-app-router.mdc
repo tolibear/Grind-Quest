@@ -1,0 +1,168 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Next.js 14 App Router Best Practices
+
+## Project Structure
+```
+app/
+├── (auth)/
+│   ├── login/
+│   └── register/
+├── api/
+│   ├── auth/
+│   └── trpc/
+├── components/
+│   ├── ui/           # shadcn/ui components
+│   └── features/     # Feature-specific components
+├── hooks/
+├── lib/
+│   ├── utils.ts
+│   └── supabase/
+├── styles/
+│   └── globals.css
+└── types/
+```
+
+## Routing Conventions
+- Use folders for routes: `app/dashboard/page.tsx`
+- Group routes with parentheses: `app/(marketing)/about/page.tsx`
+- Dynamic routes: `app/posts/[id]/page.tsx`
+- Catch-all routes: `app/docs/[...slug]/page.tsx`
+- Route groups don't affect URL: `(auth)` folder doesn't create `/auth` route
+
+## File Conventions
+- `page.tsx` - Page component
+- `layout.tsx` - Shared layout
+- `loading.tsx` - Loading UI
+- `error.tsx` - Error boundary
+- `not-found.tsx` - 404 page
+- `route.ts` - API route handler
+
+## Server Components (Default)
+```tsx
+// This is a Server Component by default
+export default async function Page() {
+  const data = await fetchData() // Direct database access
+  return <div>{data}</div>
+}
+```
+
+## Client Components
+```tsx
+'use client' // Required directive
+
+import { useState } from 'react'
+
+export default function InteractiveComponent() {
+  const [count, setCount] = useState(0)
+  return <button onClick={() => setCount(count + 1)}>{count}</button>
+}
+```
+
+## Data Fetching Patterns
+
+### Server Components
+```tsx
+// Fetch data directly in components
+async function getData() {
+  const res = await fetch('https://api.example.com/data', {
+    next: { revalidate: 3600 } // Cache for 1 hour
+  })
+  return res.json()
+}
+
+export default async function Page() {
+  const data = await getData()
+  return <main>{/* Use data */}</main>
+}
+```
+
+### Client-Side Fetching
+```tsx
+'use client'
+import useSWR from 'swr'
+
+export default function Profile() {
+  const { data, error, isLoading } = useSWR('/api/user', fetcher)
+  if (error) return <div>Failed to load</div>
+  if (isLoading) return <div>Loading...</div>
+  return <div>Hello {data.name}!</div>
+}
+```
+
+## Metadata
+```tsx
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Page Title',
+  description: 'Page description',
+  openGraph: {
+    title: 'OG Title',
+    description: 'OG Description',
+  },
+}
+```
+
+## API Routes
+```tsx
+// app/api/posts/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams
+  const query = searchParams.get('query')
+  
+  return NextResponse.json({ data: [] })
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json()
+  return NextResponse.json({ success: true })
+}
+```
+
+## Middleware
+```tsx
+// middleware.ts (root level)
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+
+export function middleware(request: NextRequest) {
+  // Add auth check here
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: ['/dashboard/:path*', '/api/:path*']
+}
+```
+
+## Environment Variables
+- `.env.local` for local development
+- `NEXT_PUBLIC_` prefix for client-side variables
+- Server-only variables don't need prefix
+- Access: `process.env.DATABASE_URL`
+
+## Performance Optimization
+- Use `next/image` for images
+- Use `next/font` for fonts
+- Implement `loading.tsx` for better UX
+- Use Suspense boundaries
+- Parallel data fetching with Promise.all()
+
+## Common Patterns
+- Authentication: Use middleware for route protection
+- Layouts: Nest layouts for shared UI
+- Error handling: Implement error.tsx boundaries
+- Loading states: Use loading.tsx and Suspense
+- Static generation: Use generateStaticParams()
+
+## TypeScript
+- Enable strict mode in tsconfig.json
+- Use proper types for page props
+- Type API responses
+- Use zod for runtime validation

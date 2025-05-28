@@ -1,0 +1,336 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Development Workflow Best Practices
+
+## Git Workflow
+
+### Branch Strategy
+```bash
+main          # Production-ready code
+├── develop   # Integration branch
+├── feature/* # New features
+├── fix/*     # Bug fixes
+└── hotfix/*  # Emergency fixes
+```
+
+### Commit Messages
+```bash
+# Format: <type>(<scope>): <subject>
+
+feat(auth): add Twitter OAuth integration
+fix(leaderboard): resolve pagination issue
+docs(readme): update installation instructions
+style(ui): format code with prettier
+refactor(api): simplify quest completion logic
+test(quests): add unit tests for point calculation
+chore(deps): update dependencies
+```
+
+### Pre-commit Hooks
+```json
+// package.json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
+```
+
+## Code Quality
+
+### ESLint Configuration
+```js
+// .eslintrc.js
+module.exports = {
+  extends: [
+    'next/core-web-vitals',
+    'plugin:@typescript-eslint/recommended',
+    'prettier'
+  ],
+  rules: {
+    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-explicit-any': 'warn',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn'
+  }
+}
+```
+
+### Prettier Configuration
+```json
+// .prettierrc
+{
+  "semi": false,
+  "singleQuote": true,
+  "tabWidth": 2,
+  "trailingComma": "es5",
+  "printWidth": 80,
+  "arrowParens": "always"
+}
+```
+
+### TypeScript Configuration
+```json
+// tsconfig.json
+{
+  "compilerOptions": {
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  }
+}
+```
+
+## Testing Strategy
+
+### Unit Tests
+```tsx
+// __tests__/utils/points.test.ts
+import { calculatePoints } from '@/lib/utils/points'
+
+describe('calculatePoints', () => {
+  it('should calculate quest points correctly', () => {
+    expect(calculatePoints('follow', 1)).toBe(100)
+  })
+  
+  it('should apply bonus multiplier', () => {
+    expect(calculatePoints('post', 1, { viral: true })).toBe(700)
+  })
+})
+```
+
+### Integration Tests
+```tsx
+// __tests__/api/quests.test.ts
+import { createMocks } from 'node-mocks-http'
+import handler from '@/app/api/quests/complete/route'
+
+describe('/api/quests/complete', () => {
+  it('should complete quest successfully', async () => {
+    const { req, res } = createMocks({
+      method: 'POST',
+      body: { questId: 'test-quest-id' },
+    })
+    
+    await handler(req, res)
+    
+    expect(res._getStatusCode()).toBe(200)
+    expect(JSON.parse(res._getData())).toEqual({
+      success: true,
+      points: 100
+    })
+  })
+})
+```
+
+### E2E Tests
+```tsx
+// e2e/auth.spec.ts
+import { test, expect } from '@playwright/test'
+
+test('user can connect Twitter account', async ({ page }) => {
+  await page.goto('/')
+  await page.click('text=Connect X')
+  // Handle OAuth flow
+  await expect(page).toHaveURL('/dashboard')
+})
+```
+
+## Environment Management
+
+### Environment Files
+```bash
+.env.local          # Local development
+.env.test           # Test environment
+.env.production     # Production (don't commit!)
+```
+
+### Environment Variables Structure
+```env
+# Authentication
+NEXTAUTH_URL=
+NEXTAUTH_SECRET=
+TWITTER_CLIENT_ID=
+TWITTER_CLIENT_SECRET=
+
+# Database
+DATABASE_URL=
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# External APIs
+TWITTER_BEARER_TOKEN=
+
+# Feature Flags
+NEXT_PUBLIC_ENABLE_WEBSOCKET=
+NEXT_PUBLIC_ENABLE_ANALYTICS=
+```
+
+## Development Scripts
+
+### Package.json Scripts
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "db:generate": "supabase gen types typescript",
+    "db:migrate": "supabase db push",
+    "analyze": "ANALYZE=true next build"
+  }
+}
+```
+
+## Performance Monitoring
+
+### Web Vitals
+```tsx
+// app/layout.tsx
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+
+export default function RootLayout({ children }) {
+  return (
+    <html>
+      <body>
+        {children}
+        <Analytics />
+        <SpeedInsights />
+      </body>
+    </html>
+  )
+}
+```
+
+### Custom Metrics
+```tsx
+// lib/metrics.ts
+export function trackEvent(event: string, properties?: Record<string, any>) {
+  if (typeof window !== 'undefined' && window.gtag) {
+    window.gtag('event', event, properties)
+  }
+}
+
+// Usage
+trackEvent('quest_completed', {
+  quest_type: 'follow',
+  points_earned: 100
+})
+```
+
+## Debugging Tools
+
+### React Developer Tools
+- Install browser extension
+- Use Profiler for performance analysis
+- Inspect component props and state
+
+### Redux DevTools (if using Redux)
+```tsx
+const store = configureStore({
+  reducer: rootReducer,
+  devTools: process.env.NODE_ENV !== 'production',
+})
+```
+
+### Network Debugging
+```tsx
+// lib/api-client.ts
+const apiClient = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+})
+
+// Log requests in development
+if (process.env.NODE_ENV === 'development') {
+  apiClient.interceptors.request.use((config) => {
+    console.log('API Request:', config)
+    return config
+  })
+}
+```
+
+## Documentation
+
+### Code Comments
+```tsx
+/**
+ * Calculates the total points for a user action
+ * @param action - The type of action performed
+ * @param multiplier - Optional multiplier for bonus points
+ * @returns The calculated points
+ */
+export function calculatePoints(
+  action: ActionType,
+  multiplier: number = 1
+): number {
+  // Implementation
+}
+```
+
+### README Structure
+```markdown
+# Project Name
+
+## Overview
+Brief description
+
+## Quick Start
+Installation and setup steps
+
+## Architecture
+High-level architecture overview
+
+## Development
+Development workflow and guidelines
+
+## Testing
+How to run tests
+
+## Deployment
+Deployment instructions
+
+## Contributing
+Contribution guidelines
+```
+
+## Security Checklist
+- [ ] Environment variables are properly secured
+- [ ] API routes have authentication checks
+- [ ] Input validation on all user inputs
+- [ ] SQL injection prevention (use parameterized queries)
+- [ ] XSS prevention (sanitize user content)
+- [ ] CSRF tokens for state-changing operations
+- [ ] Rate limiting on API endpoints
+- [ ] Secure headers configured
+- [ ] Dependencies regularly updated
+- [ ] Security scanning in CI/CD pipeline

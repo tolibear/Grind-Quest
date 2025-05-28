@@ -1,0 +1,293 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Supabase Integration Best Practices
+
+## Supabase MCP (Model Context Protocol)
+
+### Overview
+The Supabase MCP provides direct integration with Supabase services through Cursor. Use the MCP tools for:
+- Project management and configuration
+- Database schema operations
+- Edge function deployment
+- Real-time monitoring and logs
+
+### Available MCP Commands
+```
+mcp_supabase_list_projects - List all Supabase projects
+mcp_supabase_get_project - Get project details
+mcp_supabase_list_tables - List database tables
+mcp_supabase_execute_sql - Execute SQL queries
+mcp_supabase_apply_migration - Apply database migrations
+mcp_supabase_deploy_edge_function - Deploy edge functions
+mcp_supabase_get_logs - Get service logs
+```
+
+### Usage Example
+When working with Supabase, prefer using MCP commands over manual operations:
+- Use `mcp_supabase_apply_migration` instead of running migrations manually
+- Use `mcp_supabase_execute_sql` for database queries during development
+- Use `mcp_supabase_get_logs` for debugging issues
+
+## Client Setup
+
+### Environment Variables
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-key # Server only
+```
+
+### Client Configuration
+```tsx
+// lib/supabase/client.ts
+import { createBrowserClient } from '@supabase/ssr'
+
+export function createClient() {
+  return createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+```
+
+### Server Configuration
+```tsx
+// lib/supabase/server.ts
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+
+export function createClient() {
+  const cookieStore = cookies()
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          cookieStore.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          cookieStore.set({ name, value: '', ...options })
+        },
+      },
+    }
+  )
+}
+```
+
+## Database Schema
+
+### Type Generation
+```bash
+# Generate TypeScript types from database
+pnpm supabase gen types typescript --project-id your-project-id > lib/database.types.ts
+```
+
+### Using Generated Types
+```tsx
+import { Database } from '@/lib/database.types'
+
+type User = Database['public']['Tables']['users']['Row']
+type InsertUser = Database['public']['Tables']['users']['Insert']
+type UpdateUser = Database['public']['Tables']['users']['Update']
+```
+
+## Authentication Patterns
+
+### Server-Side Auth Check
+```tsx
+// app/dashboard/page.tsx
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+
+export default async function DashboardPage() {
+  const supabase = createClient()
+  
+  const { data: { user } } = await supabase.auth.getUser()
+  
+  if (!user) {
+    redirect('/login')
+  }
+  
+  return <div>Welcome {user.email}</div>
+}
+```
+
+### Client-Side Auth Hook
+```tsx
+// hooks/useUser.ts
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
+
+export function useUser() {
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user ?? null)
+        setLoading(false)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [])
+
+  return { user, loading }
+}
+```
+
+## Database Queries
+
+### Basic CRUD Operations
+```tsx
+// SELECT
+const { data, error } = await supabase
+  .from('posts')
+  .select('*, author:users(name, avatar)')
+  .order('created_at', { ascending: false })
+  .limit(10)
+
+// INSERT
+const { data, error } = await supabase
+  .from('posts')
+  .insert({ title, content, user_id })
+  .select()
+  .single()
+
+// UPDATE
+const { error } = await supabase
+  .from('posts')
+  .update({ title, content })
+  .eq('id', postId)
+  .eq('user_id', userId) // Security: ensure user owns the post
+
+// DELETE
+const { error } = await supabase
+  .from('posts')
+  .delete()
+  .eq('id', postId)
+```
+
+### Real-time Subscriptions
+```tsx
+'use client'
+
+useEffect(() => {
+  const channel = supabase
+    .channel('posts-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'posts'
+      },
+      (payload) => {
+        console.log('Change received!', payload)
+        // Update local state
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
+}, [])
+```
+
+## Row Level Security (RLS)
+
+### Common Policies
+```sql
+-- Enable RLS
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+
+-- Users can read all posts
+CREATE POLICY "Posts are viewable by everyone" 
+ON posts FOR SELECT 
+USING (true);
+
+-- Users can only insert their own posts
+CREATE POLICY "Users can insert their own posts" 
+ON posts FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+
+-- Users can only update their own posts
+CREATE POLICY "Users can update their own posts" 
+ON posts FOR UPDATE 
+USING (auth.uid() = user_id);
+
+-- Users can only delete their own posts
+CREATE POLICY "Users can delete their own posts" 
+ON posts FOR DELETE 
+USING (auth.uid() = user_id);
+```
+
+## Storage
+
+### File Upload
+```tsx
+const { data, error } = await supabase.storage
+  .from('avatars')
+  .upload(`${userId}/${fileName}`, file, {
+    cacheControl: '3600',
+    upsert: true
+  })
+
+// Get public URL
+const { data: { publicUrl } } = supabase.storage
+  .from('avatars')
+  .getPublicUrl(`${userId}/${fileName}`)
+```
+
+## Edge Functions
+
+### Calling Edge Functions
+```tsx
+const { data, error } = await supabase.functions.invoke('hello-world', {
+  body: { name: 'Functions' }
+})
+```
+
+## Error Handling
+```tsx
+try {
+  const { data, error } = await supabase
+    .from('posts')
+    .select()
+  
+  if (error) throw error
+  
+  return data
+} catch (error) {
+  console.error('Database error:', error)
+  // Handle specific error codes
+  if (error.code === 'PGRST116') {
+    // Handle RLS violation
+  }
+}
+```
+
+## Best Practices
+- Always use RLS for security
+- Generate TypeScript types from database
+- Use server components for initial data fetch
+- Implement proper error handling
+- Cache data appropriately
+- Use connection pooling for serverless
+- Validate data with zod before database operations
+- Use transactions for related operations
+- Implement retry logic for network errors

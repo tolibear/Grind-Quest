@@ -1,0 +1,111 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# shadcn/ui Best Practices
+
+## Component Usage
+
+### Installation
+- Always use `pnpm dlx shadcn@latest init` for Next.js projects
+- For Tailwind v4, ensure you're using the latest shadcn version
+- Components should be installed individually: `pnpm dlx shadcn@latest add button card table`
+
+### Import Patterns
+- Import components from `@/components/ui/[component-name]`
+- Example: `import { Button } from "@/components/ui/button"`
+- Never import from node_modules directly
+
+### Component Composition
+- Use compound components pattern (e.g., Card.Header, Card.Content)
+- Prefer composition over configuration
+- Example:
+```tsx
+<Card>
+  <CardHeader>
+    <CardTitle>Title</CardTitle>
+    <CardDescription>Description</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Content here
+  </CardContent>
+</Card>
+```
+
+### Styling Guidelines
+- Use Tailwind classes for customization, not inline styles
+- Respect the component's variant system
+- Common variants: `default`, `destructive`, `outline`, `secondary`, `ghost`, `link`
+- Size variants: `default`, `sm`, `lg`, `icon`
+
+### Dark Mode
+- Components automatically support dark mode via CSS variables
+- Use `dark:` prefix for dark mode specific styles
+- CSS variables are defined in `app/globals.css` or `app/styles/app.css`
+
+### Accessibility
+- All interactive components have proper ARIA attributes
+- Use `asChild` prop when you need to render a different element
+- Example: `<Button asChild><a href="/link">Link Button</a></Button>`
+
+### Form Components
+- Use with react-hook-form and zod for validation
+- Follow the form pattern:
+```tsx
+<Form>
+  <FormField
+    control={form.control}
+    name="fieldName"
+    render={({ field }) => (
+      <FormItem>
+        <FormLabel>Label</FormLabel>
+        <FormControl>
+          <Input {...field} />
+        </FormControl>
+        <FormDescription>Helper text</FormDescription>
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+</Form>
+```
+
+### Data Display
+- Use Table components for tabular data
+- ScrollArea for scrollable content
+- Skeleton for loading states
+- Badge for status indicators
+
+### Feedback Components
+- Toast for temporary notifications
+- Alert for persistent messages
+- Dialog for modal interactions
+- Sheet for slide-out panels
+
+### Animation
+- Components use Radix UI primitives with built-in animations
+- Use `react-spring` or `framer-motion` for custom animations
+- Respect `prefers-reduced-motion` settings
+
+## File Structure
+- Components live in `components/ui/`
+- Each component is a single file
+- Don't modify the installed components directly
+- Create wrapper components for customization
+
+## TypeScript
+- All components are fully typed
+- Use the exported types when needed
+- Example: `ButtonProps`, `CardProps`
+
+## Performance
+- Components are optimized for bundle size
+- Tree-shaking friendly
+- Use dynamic imports for heavy components
+
+## Common Patterns
+- Loading states: Use Skeleton components
+- Empty states: Create custom components using Card
+- Error boundaries: Wrap complex UI sections
+- Responsive design: Use Tailwind responsive prefixes

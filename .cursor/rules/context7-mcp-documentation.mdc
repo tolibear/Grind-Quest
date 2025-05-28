@@ -1,0 +1,88 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Context7 MCP - Up-to-date Documentation Access
+
+## Overview
+Context7 MCP provides real-time, up-to-date documentation for libraries and frameworks directly within the development environment. Use Context7 whenever you need current documentation that goes beyond training data cutoffs.
+
+Source: [Context7 GitHub](mdc:https:/github.com/upstash/context7)
+
+## When to Use Context7
+- When implementing features with libraries that may have updated APIs
+- Before suggesting code that uses external dependencies
+- When the user asks about specific library features or best practices
+- To verify current syntax and usage patterns
+- When encountering errors that might be due to outdated API usage
+
+## Available MCP Tools
+
+### resolve-library-id
+Resolves a general library name into a Context7-compatible library ID.
+```
+Parameters:
+- libraryName (required): The name of the library to search for
+```
+
+### get-library-docs
+Fetches documentation for a library using a Context7-compatible library ID.
+```
+Parameters:
+- context7CompatibleLibraryID (required): Exact library ID (e.g., /mongodb/docs, /vercel/next.js)
+- topic (optional): Focus docs on specific topic (e.g., "routing", "hooks")
+- tokens (optional): Max tokens to return (default: 10000)
+```
+
+## Common Library IDs for Grind Quest Project
+- `/vercel/next.js` - Next.js documentation
+- `/shadcn-ui/ui` - shadcn/ui components
+- `/supabase/supabase` - Supabase documentation
+- `/tailwindlabs/tailwindcss` - Tailwind CSS
+- `/nextauthjs/next-auth` - NextAuth.js
+- `/react-hook-form/react-hook-form` - React Hook Form
+- `/colinhacks/zod` - Zod validation
+
+## Usage Examples
+
+### Before implementing a feature:
+1. Use `resolve-library-id` to find the correct library ID
+2. Use `get-library-docs` with relevant topic to get current documentation
+3. Implement based on the latest patterns and APIs
+
+### Example workflow:
+```
+// Step 1: Resolve library name
+resolve-library-id("shadcn ui")
+// Returns: /shadcn-ui/ui
+
+// Step 2: Get specific documentation
+get-library-docs("/shadcn-ui/ui", topic="button")
+// Returns: Current Button component documentation
+
+// Step 3: Implement with confidence using latest API
+```
+
+## Best Practices
+- Always check Context7 docs before suggesting code with external libraries
+- Focus on specific topics when possible to get more relevant documentation
+- Use Context7 to verify deprecations and breaking changes
+- Cross-reference with project's package.json versions
+- Cache commonly used documentation mentally during a session
+
+## Integration with Other Tools
+- Use alongside Supabase MCP for database operations
+- Combine with web search for community solutions
+- Reference Context7 docs when creating new Cursor rules
+
+## Common Documentation Queries for Grind Quest
+- shadcn/ui component variants and styling
+- Next.js 14 App Router patterns
+- Supabase real-time subscriptions
+- NextAuth.js Twitter provider setup
+- Tailwind CSS v4 features
+- React Hook Form with Zod validation
+
+## Note
+Context7 provides community-contributed documentation. While generally reliable, always verify critical implementations and be aware that documentation quality may vary between projects.
