@@ -6,15 +6,13 @@ import { motion } from 'framer-motion'
 interface CursorChatProps {
   onSendMessage: (message: string) => Promise<boolean>
   onTyping: (text: string) => void
-  isConnected: boolean
 }
 
 const MAX_TYPING_LENGTH = 50
 
 export function CursorChat({ 
   onSendMessage, 
-  onTyping,
-  isConnected 
+  onTyping
 }: CursorChatProps) {
   const [isTyping, setIsTyping] = useState(false)
   const [currentMessage, setCurrentMessage] = useState('')

@@ -63,7 +63,7 @@ export function RealtimeProvider({ user, children }: RealtimeProviderProps) {
     { roomId: 'main' }
   )
 
-  const { messages, sendMessage, isConnected: chatConnected } = useChat(
+  const { messages, sendMessage } = useChat(
     user && supabaseStatus === 'connected' ? { id: user.id, username: user.handle, avatar: user.avatar } : { id: '', username: '', avatar: '' },
     { roomId: 'main' }
   )
@@ -105,9 +105,10 @@ export function RealtimeProvider({ user, children }: RealtimeProviderProps) {
       {/* <div className="fixed top-20 left-6 z-50 bg-black/80 text-white p-3 rounded-lg text-xs max-w-xs space-y-1">
         <div>User: {user.handle}</div>
         <div>Supabase: {supabaseStatus === 'testing' ? '🔄' : supabaseStatus === 'connected' ? '✅' : '❌'}</div>
-        <div>Presence: {isConnected ? '✅' : '❌'}</div>
+        <div>Presence: {presenceConnected ? '✅' : '❌'}</div>
         <div>Chat: {chatConnected ? '✅' : '❌'}</div>
         <div>Online: {Object.keys(onlineUsers).length}</div>
+        <div>Cursor: {lastCursorUpdate}</div>
         <div className="text-[10px] opacity-70">
           {Object.entries(onlineUsers).map(([id, u]) => (
             <div key={id}>
@@ -126,7 +127,6 @@ export function RealtimeProvider({ user, children }: RealtimeProviderProps) {
       <CursorChat
         onSendMessage={sendMessage}
         onTyping={handleTyping}
-        isConnected={chatConnected}
       />
     </>
   )
